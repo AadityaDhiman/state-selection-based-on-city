@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Select State, City, and Area</title>
+    <style>
+        *{
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: sans-serif;
+            text-decoration: none;
+        }
+        form {
+            max-width: 500px;
+            margin: 0 auto;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        select {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        input[type="submit"] {
+            width: 100%;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            background-color: #4caf50;
+            color: white;
+            cursor: pointer;
+        }
+        input[type="submit"]:hover {
+            background-color: #45a049;
+        }
+        label{
+            font-size: 20px;
+        }
+        input[type='text']{
+            width: 100%;
+            height: 40px;
+            color: black;
+            outline: none;
+            border: none;
+            /* border-bottom: 2px solid rgba(0, 0, 0, 0.4); */
+            margin-bottom: 10px;
+            border-radius: 5px;
+            background: rgba(202, 216, 205, 0.416);
+            font-size: 26px;
+        }
+
+        .navigation-links {
+            margin-top: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .navigation-links a {
+            padding: 5px 13px;
+            margin: 0 10px;
+            text-decoration: none;
+            color: #333;
+            border: 1px solid #333;
+            border-radius: 5px;
+            transition: background-color 0.3s, color 0.3s;
+            margin-bottom: 10px;
+        }
+
+        .navigation-links a:hover {
+            background-color: #333;
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+    <form id="mainForm" method="post">
+        {% csrf_token %}
+        {{ form }}
+        {% if form.name is None %}
+        <input id="submitButton" type="submit" value="Submit" style="display: none;">
+        {% else%}
+        
+        <input id="submitButton" type="submit" value="Submit" style="display: block;">
+        {% endif %}
+    </form>
+    
+    <hr>
+
+    <!-- Navigation Links -->
+    <div class="navigation-links">
+        <a href="/get-state">Get State</a>
+        <a href="/create-state">Create State</a>
+        <a href="/create-city">Create City</a>
+        <a href="/create-area">Create Area</a>
+    </div>
+
+    <!-- Form for selecting state, city, and area -->
+    {% if form.name is None %}
+   
+    <form id="selectForm">
+        <label for="state">Select State:</label>
+        <select name="state" id="state">
+            <option value="" {% if default_state_id is None %} selected {% endif %}>Select a state</option>
+            {% for item in items %}
+                <option value="{{ item.id }}" {% if item.id == default_state_id %} selected {% endif %}>{{ item.name }}</option>
+            {% endfor %}
+        </select>
+
+        <label for="city">Select City:</label>
+        <select name="city" id="city" disabled>
+            <option value="">-----</option>
+        </select>
+
+        <label for="area">Select Area:</label>
+        <select name="area" id="area" disabled>
+            <option value="">-----</option>
+        </select>
+    </form>
+    {% endif %}
+
+    <script>
+        
+        const stateSelect = document.querySelector("#state");
+        const citySelect = document.querySelector("#city");
+        const areaSelect = document.querySelector("#area");
+
+        stateSelect.addEventListener("change", function () {
+            const stateId = this.value;
+            citySelect.disabled = true;
+            areaSelect.disabled = true;
+            citySelect.innerHTML = '<option value="">Loading...</option>';
+
+            fetch(`/get-cities/?state_id=${stateId}`)
+                .then(response => response.json())
+                .then(data => {
+                    citySelect.innerHTML = '<option value="">Select a city</option>';
+                    data.forEach(city => {
+                        const option = document.createElement('option');
+                        option.value = city.id;
+                        option.text = city.name;
+                        citySelect.appendChild(option);
+                    });
+                    citySelect.disabled = false;
+                });
+        });
+
+        citySelect.addEventListener('change', function () {
+            const cityId = this.value;
+            areaSelect.disabled = true;
+            areaSelect.innerHTML = '<option value="">Loading...</option>';
+
+            fetch(`/get-area/?city_id=${cityId}`)
+                .then(response => response.json())
+                .then(data => {
+                    areaSelect.innerHTML = '<option value="">Select an area</option>';
+                    data.forEach(area => {
+                        const option = document.createElement('option');
+                        option.value = area.id;
+                        option.text = area.name;
+                        areaSelect.appendChild(option);
+                    });
+                    areaSelect.disabled = false;
+                });
+        });
+    </script>
+</body>
+</html>
